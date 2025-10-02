@@ -10,8 +10,8 @@ variable "aws_az" {
 
 variable "ami_id" {
   type        = string
-  description = "AMI ID for Amazon Linux 2"
-  default     = "ami-0c02fb55956c7d316"
+  description = "AMI ID for OS image"
+  default     = "ami-0360c520857e3138f"
 }
 
 variable "ssh_public_key" {

@@ -1,2 +1,2 @@
-ec2_name = "web-application"
+ec2_name = "wordpress-application"
 key_name = "root-key"
