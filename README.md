@@ -1,47 +1,33 @@
-# 🚀 DevOps Project: Production-Grade React App on AWS
+# 🚀 Production-Grade React App on AWS - Manual Deployment Guide
 
-This project demonstrates a **production-ready DevOps pipeline** for deploying a **React application (Dockerized)** on **AWS** using **Terraform** (Infrastructure as Code), **Ansible** (configuration management), and **GitHub Actions** (CI/CD).
+This project demonstrates a **production-ready deployment** of a **React application (Dockerized)** on **AWS** using **Terraform** (Infrastructure as Code) and **Ansible** (configuration management).
 
-The deployment architecture includes **VPC, private/public subnets, Auto Scaling Group, Application Load Balancer, HTTPS with ACM, CloudWatch monitoring, and Terraform remote state management**.
-
----
-
-## 🎯 Project Objectives
-
-* Build and push **Dockerized React app** to **Amazon ECR**.
-* Deploy app on **EC2 Auto Scaling Group** behind an **Application Load Balancer (ALB)**.
-* Manage infrastructure using **Terraform modules** with **remote state (S3 + DynamoDB)**.
-* Configure EC2 instances using **Ansible** (Docker setup, image pull, container run).
-* Automate build/test/deploy pipelines with **GitHub Actions**.
-* Implement **monitoring, logging, and alerts** with AWS CloudWatch.
-* Ensure **zero-downtime deployments** and **production security practices**.
+The deployment creates an **AWS VPC, EC2 instance with Elastic IP, security groups, and deploys a containerized React app** using Docker.
 
 ---
 
-## 🏗️ High-Level Architecture
+## 🎯 Project Overview
+
+This guide will walk you through:
+* Provisioning AWS infrastructure using **Terraform** 
+* Building and pushing a **Dockerized React app** to **Amazon ECR**
+* Configuring and deploying the app using **Ansible**
+* Manual step-by-step deployment process
+
+---
+
+## 🏗️ Architecture
 
 ```
-                     ┌───────────────────────┐
-                     │      GitHub Actions    │
-                     │  (CI/CD pipelines)     │
-                     └──────────┬────────────┘
-                                │
-                                ▼
-┌───────────────┐   ┌───────────────────────┐
-│   Developer   │ → │   Amazon ECR           │
-│   (React App) │   │   (Docker Images)      │
-└───────────────┘   └───────────────────────┘
-                                │
-                                ▼
 ┌─────────────────────────────────────────────┐
-│                  AWS VPC                    │
+│                AWS VPC                      │
 │ ┌──────────────┐       ┌──────────────────┐ │
-│ │   ALB (HTTPS)│──────▶│ Auto Scaling     │ │
-│ │              │       │ Group (EC2+Docker)│ │
-│ └──────────────┘       └──────────────────┘ │
-│        │                          │          │
-│        ▼                          ▼          │
-│   CloudWatch Logs          CloudWatch Alarms │
+│ │ Internet     │       │ EC2 Instance     │ │
+│ │ Gateway      │◄──────┤ (Docker + App)   │ │
+│ └──────────────┘       │ Elastic IP       │ │
+│                        └──────────────────┘ │
+│                                             │
+│ Security Groups: SSH (22) + HTTP/HTTPS     │
 └─────────────────────────────────────────────┘
 ```
 
