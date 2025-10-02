@@ -1,0 +1,23 @@
+- name: Login to ECR
+  become: yes
+  shell: |
+    aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_url }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+
+- name: Pull app image
+  become: yes
+  docker_image:
+    name: "{{ ecr_url }}:latest"
+    source: pull
+
+- name: Run app container
+  become: yes
+  docker_container:
+    name: react-app
+    image: "{{ ecr_url }}:latest"
+    state: started
+    restart_policy: always
+    published_ports:
+      - 80:80

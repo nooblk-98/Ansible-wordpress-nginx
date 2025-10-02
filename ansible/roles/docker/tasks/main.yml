@@ -1,0 +1,13 @@
+- name: Install Docker
+  become: yes
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Start Docker
+  become: yes
+  service:
+    name: docker
+    state: started
+    enabled: yes
