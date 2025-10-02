@@ -107,6 +107,30 @@ This guide explains how to manually deploy the infrastructure and WordPress appl
 - **WordPress Not Loading:**
     - Check Ansible output for errors
     - Ensure ports 80/443/8080 are open in security group/firewall
+- **Inventory Parsing Issues:**
+    - If you see warnings about "No inventory was parsed" or "provided hosts list is empty", make sure:
+      - You are in the `ansible` directory.
+      - `inventory.ini` exists and is not empty.
+      - You can also specify the inventory file directly:
+        ```sh
+        ansible -i inventory.ini wordpress_servers -m ping
+        ```
+- **Role Not Found:**
+    - Ensure your roles are located in `ansible/roles/` (e.g., `ansible/roles/docker`, `ansible/roles/app`).
+    - If you are already inside the `ansible` folder and your roles are in `ansible/roles/`, you do **not** need to specify `--roles-path`.
+    - Only use `--roles-path` if your roles are outside the default `roles` directory.
+    - Or move your roles into the default `ansible/roles/` directory.
+- **World Writable Directory Warning:**
+    - If you see a warning like:
+      ```
+      Ansible is being run in a world writable directory ... ignoring it as an ansible.cfg source.
+      ```
+    - This means your `ansible` folder permissions are too open.  
+      To fix, run:
+      ```sh
+      chmod go-w /mnt/d/github/Production-Grade-React-App-on-AWSd/ansible
+      ```
+    - After fixing permissions, Ansible will use your `ansible.cfg` and inventory correctly.
 
 ---
 
@@ -183,12 +207,24 @@ infra/
    ```sh
    ansible wordpress_servers -m ping
    ```
+   > **Troubleshooting:**  
+   > If you see warnings about "No inventory was parsed" or "provided hosts list is empty", make sure:
+   > - You are in the `ansible` directory.
+   > - `inventory.ini` exists and is not empty.
+   > - You can also specify the inventory file directly:
+   >   ```sh
+   >   ansible -i inventory.ini wordpress_servers -m ping
+   >   ```
 
 3. **Run a playbook (example):**
    ```sh
-   ansible-playbook playbook.yml
+   ansible-playbook playbooks/deploy_wordpress.yml
    ```
-   - Replace `playbook.yml` with your actual playbook file.
+   - Replace `playbooks/deploy_wordpress.yml` with your actual playbook file name and path.
+   > **Troubleshooting:**  
+   > If you see an error like "the playbook could not be found", make sure:
+   > - You are in the `ansible` directory.
+   > - The playbook file exists at the specified path (e.g., `playbooks/deploy_wordpress.yml`).
 
 ## Configuration Files
 
