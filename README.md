@@ -1,4 +1,3 @@
-
 # 🚀 Production-Grade React App on AWS - Complete Manual Deployment Guide
 
 This guide explains how to manually deploy the infrastructure and WordPress application using **Terraform** and **Ansible**.
@@ -163,6 +162,44 @@ infra/
 - [Ansible Docs](https://docs.ansible.com/)
 - [Docker Docs](https://docs.docker.com/)
 - [WordPress Docs](https://wordpress.org/support/article/installing-wordpress/)
+
+---
+
+# Production-Grade React App on AWS - Ansible Setup
+
+## Prerequisites
+- Install [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+- Ensure you have SSH access to your VPS and your private key file (e.g., `D:\ssh\ssh.pem`)
+- Update `ansible/inventory.ini` with your VPS IP, SSH user, and private key path
+
+## Steps
+
+1. **Navigate to the Ansible directory:**
+   ```sh
+   cd ansible
+   ```
+
+2. **Test connection to your server:**
+   ```sh
+   ansible wordpress_servers -m ping
+   ```
+
+3. **Run a playbook (example):**
+   ```sh
+   ansible-playbook playbook.yml
+   ```
+   - Replace `playbook.yml` with your actual playbook file.
+
+## Configuration Files
+
+- `ansible/inventory.ini`: Defines your server(s) and connection details.
+- `ansible/ansible.cfg`: Sets Ansible options (user, key, timeouts, etc.).
+
+## Troubleshooting
+
+- Ensure your private key file path is correct and accessible.
+- If you encounter permission errors, check your SSH user and key permissions.
+- For more info, see [Ansible documentation](https://docs.ansible.com/).
 
 ---
 
