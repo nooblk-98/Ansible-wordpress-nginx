@@ -1,13 +1,117 @@
-- name: Install Docker
+---
+# Update system packages
+- name: Update apt package cache
   become: yes
   apt:
-    name: docker.io
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Update yum package cache
+  become: yes
+  yum:
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+# Install required packages
+- name: Install required packages (Ubuntu/Debian)
+  become: yes
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages (CentOS/RHEL)
+  become: yes
+  yum:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+      - curl
+    state: present
+  when: ansible_os_family == "RedHat"
+
+# Install Docker
+- name: Add Docker GPG key (Ubuntu/Debian)
+  become: yes
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker repository (Ubuntu/Debian)
+  become: yes
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker repository (CentOS/RHEL)
+  become: yes
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+  when: ansible_os_family == "RedHat"
+
+- name: Install Docker (Ubuntu/Debian)
+  become: yes
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
     state: present
     update_cache: yes
+  when: ansible_os_family == "Debian"
 
-- name: Start Docker
+- name: Install Docker (CentOS/RHEL)
   become: yes
-  service:
+  yum:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+  when: ansible_os_family == "RedHat"
+
+# Install Docker Compose
+- name: Download Docker Compose
+  become: yes
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Create symbolic link for Docker Compose
+  become: yes
+  file:
+    src: /usr/local/bin/docker-compose
+    dest: /usr/bin/docker-compose
+    state: link
+
+# Start and enable Docker service
+- name: Start and enable Docker service
+  become: yes
+  systemd:
     name: docker
     state: started
     enabled: yes
+    daemon_reload: yes
+
+# Add user to docker group
+- name: Add user to docker group
+  become: yes
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes

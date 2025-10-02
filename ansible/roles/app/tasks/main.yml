@@ -1,23 +1,90 @@
-- name: Login to ECR
-  become: yes
-  shell: |
-    aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_url }}
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+---
 
-- name: Pull app image
-  become: yes
-  docker_image:
-    name: "{{ ecr_url }}:latest"
-    source: pull
 
-- name: Run app container
+# Create application directory
+- name: Create WordPress application directory
   become: yes
-  docker_container:
-    name: react-app
-    image: "{{ ecr_url }}:latest"
-    state: started
-    restart_policy: always
-    published_ports:
-      - 80:80
+  file:
+    path: /opt/wordpress
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+# Copy Docker Compose files
+- name: Copy Docker Compose file
+  become: yes
+  copy:
+    src: docker-compose.yml
+    dest: /opt/wordpress/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Copy environment file
+  become: yes
+  copy:
+    src: .env
+    dest: /opt/wordpress/.env
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+
+- name: Copy PHP uploads configuration
+  become: yes
+  copy:
+    src: uploads.ini
+    dest: /opt/wordpress/uploads.ini
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+# Update environment variables with actual passwords
+- name: Generate random WordPress database password
+  set_fact:
+    wordpress_db_password: "{{ lookup('password', '/tmp/wordpress_db_password chars=ascii_letters,digits length=16') }}"
+
+- name: Generate random MySQL root password
+  set_fact:
+    mysql_root_password: "{{ lookup('password', '/tmp/mysql_root_password chars=ascii_letters,digits length=16') }}"
+
+- name: Update environment file with generated passwords
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^WORDPRESS_DB_PASSWORD='
+    line: "WORDPRESS_DB_PASSWORD={{ wordpress_db_password }}"
+
+- name: Update environment file with MySQL root password
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^MYSQL_ROOT_PASSWORD='
+    line: "MYSQL_ROOT_PASSWORD={{ mysql_root_password }}"
+
+# Deploy WordPress with Docker Compose
+- name: Stop existing WordPress containers
+  become: yes
+  shell: cd /opt/wordpress && docker-compose down
+  ignore_errors: yes
+
+- name: Start WordPress with Docker Compose
+  become: yes
+  shell: cd /opt/wordpress && docker-compose up -d
+
+- name: Wait for WordPress to be ready
+  wait_for:
+    port: 80
+    host: "{{ ansible_host | default('localhost') }}"
+    timeout: 300
+
+# Display important information
+- name: Display WordPress access information
+  debug:
+    msg:
+      - "WordPress has been deployed successfully!"
+      - "WordPress URL: http://{{ ansible_host | default('localhost') }}"
+      - "PhpMyAdmin URL: http://{{ ansible_host | default('localhost') }}:8080"
+      - "WordPress DB Password: {{ wordpress_db_password }}"
+      - "MySQL Root Password: {{ mysql_root_password }}"
+      - "Please save these passwords in a secure location!"

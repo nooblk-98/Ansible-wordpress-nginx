@@ -1,0 +1,30 @@
+---
+- name: Deploy WordPress on VPS
+  hosts: wordpress_servers
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    ansible_ssh_pipelining: yes
+    
+  pre_tasks:
+    - name: Wait for SSH connection
+      wait_for_connection:
+        timeout: 300
+        
+    - name: Gather facts
+      setup:
+      
+  roles:
+    - docker
+    - app
+    
+  post_tasks:
+    - name: Verify WordPress deployment
+      uri:
+        url: "http://{{ ansible_host }}/"
+        method: GET
+        status_code: [200, 302]
+      delegate_to: localhost
+      retries: 5
+      delay: 10

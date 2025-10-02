@@ -1,138 +1,170 @@
-# 🚀 Production-Grade React App on AWS - Manual Deployment Guide
 
-This project demonstrates a **production-ready deployment** of a **React application (Dockerized)** on **AWS** using **Terraform** (Infrastructure as Code) and **Ansible** (configuration management).
+# 🚀 Production-Grade React App on AWS - Complete Manual Deployment Guide
 
-The deployment creates an **AWS VPC, EC2 instance with Elastic IP, security groups, and deploys a containerized React app** using Docker.
-
----
-
-## 🎯 Project Overview
-
-This guide will walk you through:
-* Provisioning AWS infrastructure using **Terraform** 
-* Building and pushing a **Dockerized React app** to **Amazon ECR**
-* Configuring and deploying the app using **Ansible**
-* Manual step-by-step deployment process
+This guide explains how to manually deploy the infrastructure and WordPress application using **Terraform** and **Ansible**.
 
 ---
 
-## 🏗️ Architecture
+## 1️⃣ Prerequisites
+
+**Required:**
+- AWS account & credentials
+- VPS/EC2 instance (public IP, SSH access)
+- SSH key for VPS
+- Terraform installed ([Download](https://www.terraform.io/downloads.html))
+- Ansible installed ([Install Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html))
+- Docker & Docker Compose (will be installed by Ansible)
+
+---
+
+## 2️⃣ Infrastructure Deployment (Terraform)
+
+1. **Configure AWS Credentials**
+     - Set up your AWS CLI: `aws configure`
+     - Export credentials if needed:
+         ```powershell
+         $env:AWS_ACCESS_KEY_ID="<your-access-key>"
+         $env:AWS_SECRET_ACCESS_KEY="<your-secret-key>"
+         $env:AWS_DEFAULT_REGION="<your-region>"
+         ```
+
+2. **Edit Terraform Variables**
+     - Open `infra/terraform.tfvars` and set your values (VPC, EC2, etc).
+
+3. **Initialize & Apply Terraform**
+     - Open terminal, go to `infra/` folder:
+         ```powershell
+         cd infra
+         terraform init
+         terraform plan
+         terraform apply
+         ```
+     - Confirm when prompted. This will provision your AWS infrastructure.
+
+4. **Note Your VPS/EC2 Public IP**
+     - You’ll need this for Ansible inventory.
+
+---
+
+## 3️⃣ Application Deployment (Ansible)
+
+1. **Configure Inventory**
+     - Edit `ansible/inventory.ini`:
+         ```ini
+         [wordpress_servers]
+         <YOUR_VPS_IP> ansible_host=<YOUR_VPS_IP> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/your-key.pem
+     
+         [wordpress_servers:vars]
+         ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+         ansible_python_interpreter=/usr/bin/python3
+         ```
+     - Replace `<YOUR_VPS_IP>` and SSH key path with your actual values.
+
+2. **Check Ansible Configuration**
+     - Ensure `ansible.cfg` points to your inventory and uses correct user/key.
+
+3. **Review Docker Compose Files**
+     - WordPress deployment files are in `ansible/roles/app/files/`:
+         - `docker-compose.yml` (WordPress, MySQL, PhpMyAdmin)
+         - `.env` (database passwords)
+         - `uploads.ini` (PHP config)
+
+4. **Run Deployment Script**
+     - From the `ansible/` folder, run:
+         ```powershell
+         ./deploy.sh
+         ```
+     - This will:
+         - Test SSH connection
+         - Install Docker & Docker Compose
+         - Copy Docker Compose files
+         - Generate secure DB passwords
+         - Deploy WordPress stack
+
+5. **Manual Playbook Run (Alternative)**
+     - You can also run:
+         ```powershell
+         ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml
+         ```
+
+---
+
+## 4️⃣ Accessing Your Application
+
+- **WordPress:** http://<YOUR_VPS_IP>
+- **PhpMyAdmin:** http://<YOUR_VPS_IP>:8080
+- **Passwords:** See Ansible output for generated DB credentials
+
+---
+
+## 5️⃣ Troubleshooting
+
+- **SSH Issues:**
+    - Check IP, user, and SSH key path in `inventory.ini`
+    - Ensure your VPS allows SSH (port 22)
+- **Docker Issues:**
+    - Ansible installs Docker & Compose automatically
+    - Check service status: `sudo systemctl status docker`
+- **WordPress Not Loading:**
+    - Check Ansible output for errors
+    - Ensure ports 80/443/8080 are open in security group/firewall
+
+---
+
+## 6️⃣ File Structure Reference
 
 ```
-┌─────────────────────────────────────────────┐
-│                AWS VPC                      │
-│ ┌──────────────┐       ┌──────────────────┐ │
-│ │ Internet     │       │ EC2 Instance     │ │
-│ │ Gateway      │◄──────┤ (Docker + App)   │ │
-│ └──────────────┘       │ Elastic IP       │ │
-│                        └──────────────────┘ │
-│                                             │
-│ Security Groups: SSH (22) + HTTP/HTTPS     │
-└─────────────────────────────────────────────┘
+ansible/
+    ├─ roles/
+    │   └─ app/
+    │       ├─ files/
+    │       │   ├─ docker-compose.yml
+    │       │   ├─ .env
+    │       │   └─ uploads.ini
+    │       └─ tasks/
+    │           └─ main.yml
+    ├─ playbooks/
+    │   └─ deploy_wordpress.yml
+    ├─ inventory.ini
+    ├─ ansible.cfg
+    └─ deploy.sh
+infra/
+    ├─ main.tf
+    ├─ terraform.tfvars
+    └─ ...
 ```
 
 ---
 
-## 📂 Repository Structure
+## 7️⃣ Useful Commands
 
-```
-Production-Grade-React-App-on-AWS/
-├─ app/                         # React app (Dockerized)
-│  ├─ Dockerfile
-│  ├─ src/
-│  └─ package.json
-├─ infra/                       # Terraform IaC
-│  ├─ envs/
-│  │  ├─ dev/
-│  │  └─ prod/
-│  ├─ modules/
-│  │  ├─ vpc/
-│  │  ├─ alb/
-│  │  ├─ asg/
-│  │  ├─ ecr/
-│  │  └─ observability/
-│  ├─ backend/
-│  └─ main.tf
-├─ ansible/                     # Configuration management
-│  ├─ roles/
-│  │  ├─ docker/
-│  │  └─ app/
-│  └─ playbooks/
-│     └─ site.yml
-├─ .github/workflows/           # GitHub Actions pipelines
-│  ├─ ci.yml
-│  └─ cd.yml
-└─ README.md
-```
+- **Terraform:**
+    - `terraform init` — Initialize working directory
+    - `terraform plan` — Preview changes
+    - `terraform apply` — Apply changes
+- **Ansible:**
+    - `ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml` — Deploy WordPress
+    - `ansible wordpress_servers -m ping` — Test SSH connection
 
 ---
 
-## 🛠️ Tools & Technologies
+## 8️⃣ Security & Best Practices
 
-* **AWS**: VPC, ALB, EC2, Auto Scaling, ECR, ACM, Route53, CloudWatch
-* **Terraform**: Infrastructure as Code (IaC), remote state, modules
-* **Ansible**: Config management & deployment automation
-* **GitHub Actions**: CI/CD pipelines
-* **Docker**: Containerization of React app
-* **Monitoring**: CloudWatch logs & alarms
-* **Security**: IAM least privilege, HTTPS, secrets via Parameter Store
+- Change all default passwords
+- Use SSH keys, not passwords
+- Restrict security group/firewall rules
+- Monitor resources and logs
 
 ---
 
-## 📌 Milestones & Workflow
+## 9️⃣ References
 
-1. **Setup AWS Account & CLI**: Create an AWS account, configure CLI with access keys.
-2. **Clone Repo**: `git clone https://github.com/yourusername/Production-Grade-React-App-on-AWS.git`
-3. **Build React App**: Develop your React app in the `app/` directory.
-4. **Configure Infrastructure**:
-    * Update Terraform variables in `infra/envs/dev/` or `infra/envs/prod/`.
-    * Configure backend S3 bucket and DynamoDB table for Terraform state.
-5. **Deploy Infrastructure**:
-    * Navigate to `infra/`.
-    * Run `terraform init`, `terraform plan`, and `terraform apply`.
-6. **Configure Ansible**:
-    * Update Ansible inventory and variables in `ansible/`.
-7. **Deploy App**:
-    * Navigate to `ansible/playbooks/`.
-    * Run `ansible-playbook -i inventory site.yml`.
-8. **Setup CI/CD**:
-    * Configure GitHub Secrets for AWS credentials, ECR, etc.
-    * Update GitHub Actions workflows in `.github/workflows/`.
-9. **Monitor & Optimize**: Use CloudWatch to monitor logs, set up alarms, and optimize resources.
-10. **Security Review**: Ensure IAM roles, security groups, and other settings follow best security practices.
+- [Terraform Docs](https://www.terraform.io/docs)
+- [Ansible Docs](https://docs.ansible.com/)
+- [Docker Docs](https://docs.docker.com/)
+- [WordPress Docs](https://wordpress.org/support/article/installing-wordpress/)
 
 ---
 
-## 📚 References & Learning Resources
-
-* **AWS Documentation**: For services like EC2, S3, IAM, etc.
-* **Terraform Documentation**: Learn about modules, remote state, etc.
-* **Ansible Documentation**: For configuration management and playbook authoring.
-* **GitHub Actions Documentation**: Understand CI/CD pipeline configuration.
-* **Docker Documentation**: Learn about containerizing applications.
-* **React Documentation**: For building and optimizing React applications.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repo.
-2. Create a new branch: `git checkout -b feature/YourFeature`.
-3. Make your changes and commit them: `git commit -m 'Add some feature'`.
-4. Push to the branch: `git push origin feature/YourFeature`.
-5. Create a pull request.
-
-Please ensure your code adheres to the project's coding standards and includes appropriate tests.
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**Happy Coding!** 🚀
+**Happy Deploying! 🚀**
 
