@@ -4,6 +4,14 @@ This guide walks you through deploying a VPS on AWS using **Terraform** and inst
 
 ---
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hashicorp/terraform-website/master/static/images/logo-terraform.svg" alt="Terraform" height="40"/>
+  <img src="https://raw.githubusercontent.com/ansible/ansible/devel/docs/docsite/_static/ansible-logo.png" alt="Ansible" height="40"/>
+  <img src="https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png" alt="AWS" height="40"/>
+  <img src="https://raw.githubusercontent.com/Azure/azure-docs/master/articles/includes/media/azure-logo.png" alt="Azure" height="40"/>
+</p>
+
+
 ## 1️⃣ Prerequisites
 
 - AWS account & credentials
