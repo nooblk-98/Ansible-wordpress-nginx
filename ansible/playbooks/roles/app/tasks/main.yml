@@ -30,23 +30,18 @@
     group: "{{ ansible_user }}"
     mode: '0600'
 
-- name: Copy PHP uploads configuration
-  become: yes
-  copy:
-    src: uploads.ini
-    dest: /opt/wordpress/uploads.ini
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0644'
-
 # Update environment variables with actual passwords
 - name: Generate random WordPress database password
   set_fact:
-    wordpress_db_password: "{{ lookup('password', '/tmp/wordpress_db_password chars=ascii_letters,digits length=16') }}"
+    MYSQL_PASSWORD: "{{ lookup('password', '/tmp/wordpress_db_password chars=ascii_letters,digits length=16') }}"
 
 - name: Generate random MySQL root password
   set_fact:
-    mysql_root_password: "{{ lookup('password', '/tmp/mysql_root_password chars=ascii_letters,digits length=16') }}"
+    MYSQL_ROOT_PASSWORD: "{{ lookup('password', '/tmp/mysql_root_password chars=ascii_letters,digits length=16') }}"
+
+- name: Generate random Wordpress password
+  set_fact:
+    WP_ADMIN_PASSWORD: "{{ lookup('password', '/tmp/mysql_root_password chars=ascii_letters,digits length=16') }}"
 
 - name: Update environment file with generated passwords
   become: yes

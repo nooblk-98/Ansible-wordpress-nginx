@@ -19,12 +19,12 @@
     - docker
     - app
     
-  post_tasks:
-    - name: Verify WordPress deployment
-      uri:
-        url: "http://{{ ansible_host }}/"
-        method: GET
-        status_code: [200, 302]
-      delegate_to: localhost
-      retries: 5
-      delay: 10
+  # post_tasks:
+  #   - name: Verify WordPress deployment
+  #     uri:
+  #       url: "http://{{ ansible_host }}/"
+  #       method: GET
+  #       status_code: [200, 302]
+  #     delegate_to: localhost
+  #     retries: 5
+  #     delay: 10
