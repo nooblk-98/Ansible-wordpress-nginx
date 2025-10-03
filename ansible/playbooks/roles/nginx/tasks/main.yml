@@ -1,0 +1,52 @@
+---
+- name: Install Nginx
+  become: yes
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Install Certbot and python3-certbot-nginx
+  become: yes
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+
+- name: Configure Nginx reverse proxy for site
+  become: yes
+  template:
+    src: nginx-site.conf.j2
+    dest: /etc/nginx/sites-available/{{ site_domain }}
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable Nginx site
+  become: yes
+  file:
+    src: /etc/nginx/sites-available/{{ site_domain }}
+    dest: /etc/nginx/sites-enabled/{{ site_domain }}
+    state: link
+    force: yes
+
+- name: Remove default Nginx site
+  become: yes
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Reload Nginx
+  become: yes
+  service:
+    name: nginx
+    state: reloaded
+
+- name: Obtain SSL certificate with Certbot
+  become: yes
+  command: >
+    certbot --nginx -d {{ site_domain }} --non-interactive --agree-tos --email {{ certbot_email }} --redirect
+  args:
+    creates: "/etc/letsencrypt/live/{{ site_domain }}/fullchain.pem"
