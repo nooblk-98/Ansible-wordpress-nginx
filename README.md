@@ -27,7 +27,14 @@ This guide walks you through deploying a VPS on AWS using **Terraform** and inst
 
 ### a. Configure AWS Credentials
 
-Set up your AWS CLI:
+Store your credentials in `~/.aws/credentials`:
+```
+[default]
+aws_access_key_id = your-access-key-id
+aws_secret_access_key = your-secret-access-key
+```
+
+Or set up your AWS CLI:
 ```sh
 aws configure
 ```
