@@ -1,16 +1,13 @@
+[![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white&style=for-the-badge)](https://www.terraform.io/)
+[![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white&style=for-the-badge)](https://www.ansible.com/)
+[![AWS](https://img.shields.io/badge/AWS-232F3E?logo=amazon-aws&logoColor=white&style=for-the-badge)](https://aws.amazon.com/)
+[![Azure](https://img.shields.io/badge/Azure-0078D4?logo=microsoft-azure&logoColor=white&style=for-the-badge)](https://azure.microsoft.com/)
+
 # Deploy WordPress & PhpMyAdmin on AWS VPS with Terraform & Ansible
 
 This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress (with PhpMyAdmin) using **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
 
 ---
-
-<p align="center">
-  <img src="https://logo.svgcdn.com/l/terraform-icon-8x.png" alt="Terraform" height="40"/>
-  <img src="https://blog.cavelab.dev/2021/04/ansible-info-playbooks/cover.png" alt="Ansible" height="40"/>
-  <img src="https://download.logo.wine/logo/Amazon_Web_Services/Amazon_Web_Services-Logo.wine.png" alt="AWS" height="40"/>
-  <img src="https://www.bizstream.com/wp-content/uploads/2022/04/microsoft-azure-logo.png" alt="Azure" height="40"/>
-</p>
-
 
 ## 1️⃣ Prerequisites
 
