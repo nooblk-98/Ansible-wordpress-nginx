@@ -1,6 +1,6 @@
-# 🚀 Deploy WordPress on AWS VPS with Terraform & Ansible – Beginner Guide
+# Deploy WordPress & PhpMyAdmin on AWS VPS with Terraform & Ansible – Beginner Guide
 
-This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress with **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
+This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress (with PhpMyAdmin) using **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
 
 ---
 
@@ -58,7 +58,7 @@ Or check in AWS EC2 console.
 
 ---
 
-## 3️⃣ Install WordPress with Ansible
+## 3️⃣ Install WordPress & PhpMyAdmin with Ansible
 
 ### a. Configure Inventory
 
@@ -77,10 +77,25 @@ ansible_become_method=sudo
 ### b. Review Configuration Files
 
 - `ansible/ansible.cfg`: Points to inventory and sets connection options.
-- `ansible/roles/app/files/.env`: Contains WordPress and DB secrets.
-- `ansible/roles/app/files/docker-compose.yml`: Defines WordPress, MariaDB, and Autoheal containers.
+- `ansible/roles/app/files/.env`: Contains WordPress, DB, and admin secrets.
+- `ansible/roles/app/files/docker-compose.yml`: Defines WordPress, MariaDB, Autoheal containers.
+- **PhpMyAdmin is accessible via Nginx reverse proxy at `/phpmyadmin`**.
 
-### c. Run Ansible Playbook
+### c. Change Domain & SSL Details
+
+To change your domain and SSL email for Nginx and Certbot, edit:
+```
+ansible/playbooks/roles/nginx/defaults/main.yml
+```
+Example:
+```yaml
+site_domain: yourdomain.com
+certbot_email: youremail@example.com
+backend_host: 127.0.0.1
+backend_port: 8080
+```
+
+### d. Run Ansible Playbook
 
 From the `ansible` directory:
 ```sh
@@ -129,8 +144,8 @@ ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml
 
 ## 5️⃣ Accessing Your Application
 
-- **WordPress:** https://<YOUR_DOMAIN> or http://<YOUR_VPS_IP>:8080
-- **PhpMyAdmin:** https://<YOUR_DOMAIN>/phpmyadmin (if configured)
+- **WordPress:** https://<YOUR_DOMAIN>
+- **PhpMyAdmin:** https://<YOUR_DOMAIN>/phpmyadmin
 - **Credentials:** See Ansible output or check `/opt/wordpress/.env` on the VPS.
 
 ---
@@ -175,6 +190,7 @@ infra/
 - **Ansible Errors:** Use `-vvv` for verbose output.
 - **Site Not Loading:** Check firewall/security group for open ports (80, 443, 8080).
 - **Role/Path Issues:** Ensure roles are in `ansible/roles/`.
+- **Nginx/SSL Issues:** Edit `ansible/playbooks/roles/nginx/defaults/main.yml` for domain/email changes.
 
 ---
 
