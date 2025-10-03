@@ -90,13 +90,26 @@
     host: "{{ ansible_host | default('localhost') }}"
     timeout: 300
 
+# Update WordPress site and admin URLs to use provided domain with HTTPS
+- name: Update WordPress site and admin URLs to use provided domain with HTTPS
+  become: yes
+  shell: |
+    docker exec wordpress wp option update siteurl "https://{{ site_domain }}"
+    docker exec wordpress wp option update home "https://{{ site_domain }}"
+  args:
+    warn: false
+  environment:
+    WORDPRESS_DB_PASSWORD: "{{ wordpress_db_password }}"
+    MYSQL_PASSWORD: "{{ mysql_user_password }}"
+    MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+  when: site_domain is defined
+
 # Display important information
 - name: Display WordPress access information
   debug:
     msg:
       - "✅ WordPress has been deployed successfully!"
-      - "🌐 WordPress URL: http://{{ ansible_host | default('localhost') }}"
-      - "🛠 PhpMyAdmin URL: http://{{ ansible_host | default('localhost') }}:8080"
+      - "🌐 WordPress URL: http://{{ ansible_host | default('localhost') }}:8080"
       - "👤 WordPress Admin User: {{ lookup('env', 'WP_ADMIN_USER') | default('admin') }}"
       - "🔑 WordPress Admin Password: {{ wordpress_admin_password }}"
       - "🔑 WordPress DB Password: {{ wordpress_db_password }}"

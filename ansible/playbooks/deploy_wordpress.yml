@@ -17,8 +17,8 @@
       
   roles:
     #- docker
-    #- app
-    - nginx
+    - app
+    #- nginx
     
   # post_tasks:
   #   - name: Verify WordPress deployment
