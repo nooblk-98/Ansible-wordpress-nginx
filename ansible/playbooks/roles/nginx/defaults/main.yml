@@ -1,4 +1,4 @@
 site_domain: example.com
 certbot_email: admin@example.com
 backend_host: 127.0.0.1
-backend_port: 80
+backend_port: 8080
