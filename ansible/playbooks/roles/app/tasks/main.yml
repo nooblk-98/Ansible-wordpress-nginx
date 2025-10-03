@@ -1,6 +1,4 @@
 ---
-
-
 # Create application directory
 - name: Create WordPress application directory
   become: yes
@@ -30,7 +28,7 @@
     group: "{{ ansible_user }}"
     mode: '0600'
 
-# Update environment variables with actual passwords
+# Generate random secrets
 - name: Generate random WordPress database password
   set_fact:
     wordpress_db_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
@@ -43,20 +41,38 @@
   set_fact:
     mysql_root_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
 
-
-# Update environment variables with actual passwords
-- name: Generate random WordPress database password
+- name: Generate random WordPress admin password
   set_fact:
-    wordpress_db_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
+    wordpress_admin_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+') }}"
 
-- name: Generate random MySQL user password
-  set_fact:
-    mysql_user_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
+# Update environment file with generated passwords
+- name: Update environment file with WordPress DB password
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^WORDPRESS_DB_PASSWORD='
+    line: "WORDPRESS_DB_PASSWORD={{ wordpress_db_password }}"
 
-- name: Generate random MySQL root password
-  set_fact:
-    mysql_root_password: "{{ lookup('password', '/dev/null', length=16, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
+- name: Update environment file with MySQL user password
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^MYSQL_PASSWORD='
+    line: "MYSQL_PASSWORD={{ mysql_user_password }}"
 
+- name: Update environment file with MySQL root password
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^MYSQL_ROOT_PASSWORD='
+    line: "MYSQL_ROOT_PASSWORD={{ mysql_root_password }}"
+
+- name: Update environment file with WordPress admin password
+  become: yes
+  lineinfile:
+    path: /opt/wordpress/.env
+    regexp: '^WP_ADMIN_PASSWORD='
+    line: "WP_ADMIN_PASSWORD={{ wordpress_admin_password }}"
 
 # Deploy WordPress with Docker Compose
 - name: Stop existing WordPress containers
@@ -81,7 +97,9 @@
       - "✅ WordPress has been deployed successfully!"
       - "🌐 WordPress URL: http://{{ ansible_host | default('localhost') }}"
       - "🛠 PhpMyAdmin URL: http://{{ ansible_host | default('localhost') }}:8080"
+      - "👤 WordPress Admin User: {{ lookup('ini', 'WP_ADMIN_USER type=properties file=/opt/wordpress/.env') | default('admin') }}"
+      - "🔑 WordPress Admin Password: {{ wordpress_admin_password }}"
       - "🔑 WordPress DB Password: {{ wordpress_db_password }}"
       - "🔑 MySQL User Password: {{ mysql_user_password }}"
       - "🔑 MySQL Root Password: {{ mysql_root_password }}"
-      - "⚠️ Please save these passwords in a secure location!"
+      - "⚠️ Please save these credentials in a secure location!"
