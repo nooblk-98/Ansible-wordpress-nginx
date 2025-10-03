@@ -216,8 +216,3 @@ infra/
 - [WordPress Docs](https://wordpress.org/support/article/installing-wordpress/)
 
 ---
-
-**Happy Deploying! 🚀**
-
-**Happy Deploying! 🚀**
-
