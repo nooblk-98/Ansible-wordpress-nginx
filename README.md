@@ -1,4 +1,4 @@
-# Deploy WordPress & PhpMyAdmin on AWS VPS with Terraform & Ansible – Beginner Guide
+# Deploy WordPress & PhpMyAdmin on AWS VPS with Terraform & Ansible
 
 This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress (with PhpMyAdmin) using **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
 
