@@ -120,16 +120,10 @@ This guide explains how to manually deploy the infrastructure and WordPress appl
     - If you are already inside the `ansible` folder and your roles are in `ansible/roles/`, you do **not** need to specify `--roles-path`.
     - Only use `--roles-path` if your roles are outside the default `roles` directory.
     - Or move your roles into the default `ansible/roles/` directory.
-- **World Writable Directory Warning:**
-    - If you see a warning like:
       ```
       Ansible is being run in a world writable directory ... ignoring it as an ansible.cfg source.
       ```
-    - This means your `ansible` folder permissions are too open.  
-      To fix, run:
-      ```sh
       chmod go-w /mnt/d/github/Production-Grade-React-App-on-AWSd/ansible
-      ```
     - After fixing permissions, Ansible will use your `ansible.cfg` and inventory correctly.
 
 ---
