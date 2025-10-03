@@ -1,130 +1,137 @@
-# 🚀 Production-Grade React App on AWS - Complete Manual Deployment Guide
+# 🚀 Deploy WordPress on AWS VPS with Terraform & Ansible – Beginner Guide
 
-This guide explains how to manually deploy the infrastructure and WordPress application using **Terraform** and **Ansible**.
+This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress with **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
 
 ---
 
 ## 1️⃣ Prerequisites
 
-**Required:**
 - AWS account & credentials
-- VPS/EC2 instance (public IP, SSH access)
-- SSH key for VPS
+- SSH key for your VPS (EC2)
 - Terraform installed ([Download](https://www.terraform.io/downloads.html))
 - Ansible installed ([Install Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html))
-- Docker & Docker Compose (will be installed by Ansible)
+- Python 3 installed on your local machine
 
 ---
 
-## 2️⃣ Infrastructure Deployment (Terraform)
+## 2️⃣ Deploy VPS Infrastructure with Terraform
 
-1. **Configure AWS Credentials**
-     - Set up your AWS CLI: `aws configure`
-     - Export credentials if needed:
-         ```powershell
-         $env:AWS_ACCESS_KEY_ID="<your-access-key>"
-         $env:AWS_SECRET_ACCESS_KEY="<your-secret-key>"
-         $env:AWS_DEFAULT_REGION="<your-region>"
-         ```
+### a. Configure AWS Credentials
 
-2. **Edit Terraform Variables**
-     - Open `infra/terraform.tfvars` and set your values (VPC, EC2, etc).
+Set up your AWS CLI:
+```sh
+aws configure
+```
+Or export credentials:
+```sh
+export AWS_ACCESS_KEY_ID="<your-access-key>"
+export AWS_SECRET_ACCESS_KEY="<your-secret-key>"
+export AWS_DEFAULT_REGION="<your-region>"
+```
 
-3. **Initialize & Apply Terraform**
-     - Open terminal, go to `infra/` folder:
-         ```powershell
-         cd infra
-         terraform init
-         terraform plan
-         terraform apply
-         ```
-     - Confirm when prompted. This will provision your AWS infrastructure.
+### b. Edit Terraform Variables
 
-4. **Note Your VPS/EC2 Public IP**
-     - You’ll need this for Ansible inventory.
+Open `infra/terraform.tfvars` and set:
+```hcl
+ec2_name = "wordpress-application"
+key_name = "your-ec2-keypair-name"
+```
+Make sure `key_name` matches an existing EC2 key pair in AWS.
 
----
+### c. Initialize & Apply Terraform
 
-## 3️⃣ Application Deployment (Ansible)
+```sh
+cd infra
+terraform init
+terraform plan
+terraform apply
+```
+Confirm when prompted. This will create your VPC, subnet, security groups, EC2 instance, and Elastic IP.
 
-1. **Configure Inventory**
-     - Edit `ansible/inventory.ini`:
-         ```ini
-         [wordpress_servers]
-         <YOUR_VPS_IP> ansible_host=<YOUR_VPS_IP> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/your-key.pem
-     
-         [wordpress_servers:vars]
-         ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-         ansible_python_interpreter=/usr/bin/python3
-         ```
-     - Replace `<YOUR_VPS_IP>` and SSH key path with your actual values.
+### d. Get Your VPS Public IP
 
-2. **Check Ansible Configuration**
-     - Ensure `ansible.cfg` points to your inventory and uses correct user/key.
-
-3. **Review Docker Compose Files**
-     - WordPress deployment files are in `ansible/roles/app/files/`:
-         - `docker-compose.yml` (WordPress, MySQL, PhpMyAdmin)
-         - `.env` (database passwords)
-         - `uploads.ini` (PHP config)
-
-4. **Run Deployment Script**
-     - From the `ansible/` folder, run:
-         ```powershell
-         ./deploy.sh
-         ```
-     - This will:
-         - Test SSH connection
-         - Install Docker & Docker Compose
-         - Copy Docker Compose files
-         - Generate secure DB passwords
-         - Deploy WordPress stack
-
-5. **Manual Playbook Run (Alternative)**
-     - You can also run:
-         ```powershell
-         ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml
-         ```
+After deployment, find your public IP:
+```sh
+terraform output ec2_public_ip
+```
+Or check in AWS EC2 console.
 
 ---
 
-## 4️⃣ Accessing Your Application
+## 3️⃣ Install WordPress with Ansible
 
-- **WordPress:** http://<YOUR_VPS_IP>
-- **PhpMyAdmin:** http://<YOUR_VPS_IP>:8080
-- **Passwords:** See Ansible output for generated DB credentials
+### a. Configure Inventory
+
+Edit `ansible/inventory.ini`:
+```ini
+[wordpress_servers]
+wp1 ansible_host=<YOUR_VPS_IP> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/your-key.pem
+
+[wordpress_servers:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_python_interpreter=/usr/bin/python3
+ansible_become=true
+ansible_become_method=sudo
+```
+
+### b. Review Configuration Files
+
+- `ansible/ansible.cfg`: Points to inventory and sets connection options.
+- `ansible/roles/app/files/.env`: Contains WordPress and DB secrets.
+- `ansible/roles/app/files/docker-compose.yml`: Defines WordPress, MariaDB, and Autoheal containers.
+
+### c. Run Ansible Playbook
+
+From the `ansible` directory:
+```sh
+ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml
+```
 
 ---
 
-## 5️⃣ Troubleshooting
+## 4️⃣ Debugging & Useful Commands
 
-- **SSH Issues:**
-    - Check IP, user, and SSH key path in `inventory.ini`
-    - Ensure your VPS allows SSH (port 22)
-- **Docker Issues:**
-    - Ansible installs Docker & Compose automatically
-    - Check service status: `sudo systemctl status docker`
-- **WordPress Not Loading:**
-    - Check Ansible output for errors
-    - Ensure ports 80/443/8080 are open in security group/firewall
-- **Inventory Parsing Issues:**
-    - If you see warnings about "No inventory was parsed" or "provided hosts list is empty", make sure:
-      - You are in the `ansible` directory.
-      - `inventory.ini` exists and is not empty.
-      - You can also specify the inventory file directly:
-        ```sh
-        ansible -i inventory.ini wordpress_servers -m ping
-        ```
-- **Role Not Found:**
-    - Ensure your roles are located in `ansible/roles/` (e.g., `ansible/roles/docker`, `ansible/roles/app`).
-    - If you are already inside the `ansible` folder and your roles are in `ansible/roles/`, you do **not** need to specify `--roles-path`.
-    - Only use `--roles-path` if your roles are outside the default `roles` directory.
-    - Or move your roles into the default `ansible/roles/` directory.
-      ```
-      Ansible is being run in a world writable directory ... ignoring it as an ansible.cfg source.
-      ```
-      chmod go-w /mnt/d/github/Production-Grade-React-App-on-AWSd/ansible
-    - After fixing permissions, Ansible will use your `ansible.cfg` and inventory correctly.
+### Terraform
+
+- Show outputs:
+  ```sh
+  terraform output
+  ```
+- Show resources:
+  ```sh
+  terraform state list
+  ```
+- Destroy infrastructure:
+  ```sh
+  terraform destroy
+  ```
+
+### Ansible
+
+- Test SSH connection:
+  ```sh
+  ansible wordpress_servers -m ping -i inventory.ini
+  ```
+- Run playbook with debug output:
+  ```sh
+  ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml -vvv
+  ```
+- Check facts:
+  ```sh
+  ansible wordpress_servers -m setup -i inventory.ini
+  ```
+- SSH manually for troubleshooting:
+  ```sh
+  ssh -i ~/.ssh/your-key.pem ubuntu@<YOUR_VPS_IP>
+  ```
+
+---
+
+## 5️⃣ Accessing Your Application
+
+- **WordPress:** https://<YOUR_DOMAIN> or http://<YOUR_VPS_IP>:8080
+- **PhpMyAdmin:** https://<YOUR_DOMAIN>/phpmyadmin (if configured)
+- **Credentials:** See Ansible output or check `/opt/wordpress/.env` on the VPS.
 
 ---
 
@@ -132,104 +139,51 @@ This guide explains how to manually deploy the infrastructure and WordPress appl
 
 ```
 ansible/
-    ├─ roles/
-    │   └─ app/
-    │       ├─ files/
-    │       │   ├─ docker-compose.yml
-    │       │   ├─ .env
-    │       │   └─ uploads.ini
-    │       └─ tasks/
-    │           └─ main.yml
-    ├─ playbooks/
-    │   └─ deploy_wordpress.yml
-    ├─ inventory.ini
-    ├─ ansible.cfg
-    └─ deploy.sh
+  ├─ roles/
+  │   ├─ app/
+  │   │   ├─ files/
+  │   │   │   ├─ docker-compose.yml
+  │   │   │   ├─ .env
+  │   │   └─ tasks/
+  │   │       └─ main.yml
+  │   └─ nginx/
+  │       ├─ tasks/
+  │       │   └─ main.yml
+  │       ├─ defaults/
+  │       │   └─ main.yml
+  │       └─ templates/
+  │           └─ nginx-site.conf.j2
+  ├─ playbooks/
+  │   └─ deploy_wordpress.yml
+  ├─ inventory.ini
+  ├─ ansible.cfg
+  └─ deploy.sh
 infra/
-    ├─ main.tf
-    ├─ terraform.tfvars
-    └─ ...
+  ├─ main.tf
+  ├─ variables.tf
+  ├─ outputs.tf
+  ├─ terraform.tfvars
+  └─ ...
 ```
 
 ---
 
-## 7️⃣ Useful Commands
+## 7️⃣ Troubleshooting Tips
 
-- **Terraform:**
-    - `terraform init` — Initialize working directory
-    - `terraform plan` — Preview changes
-    - `terraform apply` — Apply changes
-- **Ansible:**
-    - `ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml` — Deploy WordPress
-    - `ansible wordpress_servers -m ping` — Test SSH connection
+- **SSH Issues:** Check security group rules, key path, and user in `inventory.ini`.
+- **Docker Issues:** Ensure Docker is running: `sudo systemctl status docker`
+- **Ansible Errors:** Use `-vvv` for verbose output.
+- **Site Not Loading:** Check firewall/security group for open ports (80, 443, 8080).
+- **Role/Path Issues:** Ensure roles are in `ansible/roles/`.
 
 ---
 
-## 8️⃣ Security & Best Practices
-
-- Change all default passwords
-- Use SSH keys, not passwords
-- Restrict security group/firewall rules
-- Monitor resources and logs
-
----
-
-## 9️⃣ References
+## 8️⃣ References
 
 - [Terraform Docs](https://www.terraform.io/docs)
 - [Ansible Docs](https://docs.ansible.com/)
 - [Docker Docs](https://docs.docker.com/)
 - [WordPress Docs](https://wordpress.org/support/article/installing-wordpress/)
-
----
-
-# Production-Grade React App on AWS - Ansible Setup
-
-## Prerequisites
-- Install [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
-- Ensure you have SSH access to your VPS and your private key file (e.g., `D:\ssh\ssh.pem`)
-- Update `ansible/inventory.ini` with your VPS IP, SSH user, and private key path
-
-## Steps
-
-1. **Navigate to the Ansible directory:**
-   ```sh
-   cd ansible
-   ```
-
-2. **Test connection to your server:**
-   ```sh
-   ansible wordpress_servers -m ping
-   ```
-   > **Troubleshooting:**  
-   > If you see warnings about "No inventory was parsed" or "provided hosts list is empty", make sure:
-   > - You are in the `ansible` directory.
-   > - `inventory.ini` exists and is not empty.
-   > - You can also specify the inventory file directly:
-   >   ```sh
-   >   ansible -i inventory.ini wordpress_servers -m ping
-   >   ```
-
-3. **Run a playbook (example):**
-   ```sh
-   ansible-playbook playbooks/deploy_wordpress.yml
-   ```
-   - Replace `playbooks/deploy_wordpress.yml` with your actual playbook file name and path.
-   > **Troubleshooting:**  
-   > If you see an error like "the playbook could not be found", make sure:
-   > - You are in the `ansible` directory.
-   > - The playbook file exists at the specified path (e.g., `playbooks/deploy_wordpress.yml`).
-
-## Configuration Files
-
-- `ansible/inventory.ini`: Defines your server(s) and connection details.
-- `ansible/ansible.cfg`: Sets Ansible options (user, key, timeouts, etc.).
-
-## Troubleshooting
-
-- Ensure your private key file path is correct and accessible.
-- If you encounter permission errors, check your SSH user and key permissions.
-- For more info, see [Ansible documentation](https://docs.ansible.com/).
 
 ---
 
