@@ -97,7 +97,7 @@
       - "✅ WordPress has been deployed successfully!"
       - "🌐 WordPress URL: http://{{ ansible_host | default('localhost') }}"
       - "🛠 PhpMyAdmin URL: http://{{ ansible_host | default('localhost') }}:8080"
-      - "👤 WordPress Admin User: {{ lookup('ini', 'WP_ADMIN_USER type=properties file=/opt/wordpress/.env') | default('admin') }}"
+      - "👤 WordPress Admin User: {{ lookup('env', 'WP_ADMIN_USER') | default('admin') }}"
       - "🔑 WordPress Admin Password: {{ wordpress_admin_password }}"
       - "🔑 WordPress DB Password: {{ wordpress_db_password }}"
       - "🔑 MySQL User Password: {{ mysql_user_password }}"
