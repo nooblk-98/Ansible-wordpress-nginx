@@ -16,8 +16,9 @@
       setup:
       
   roles:
-    #- docker
-    - app
+    - docker
     - nginx
+    - app
+
     
     

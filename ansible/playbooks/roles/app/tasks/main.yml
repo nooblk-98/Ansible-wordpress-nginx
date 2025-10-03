@@ -88,19 +88,29 @@
 - name: Update WordPress site and admin URLs to use provided domain with HTTPS
   become: yes
   shell: |
-    docker exec wordperss wp option update siteurl "https://{{ site_domain }}" --allow-root
-    docker exec wordperss wp option update home "https://{{ site_domain }}" --allow-root
+    docker exec wordperss wp option update siteurl "https://{{ site_domain }}" --path=/var/www/html --allow-root
+    docker exec wordperss wp option update home "https://{{ site_domain }}" --path=/var/www/html --allow-root
   when: site_domain is defined and site_domain | length > 0
 
+# Display WordPress access information
+- name: Extract WordPress credentials from .env
+  become: yes
+  shell: |
+    grep -E "^(SITE_DOMAIN|WP_ADMIN_USER|WP_ADMIN_PASSWORD|WORDPRESS_DB_PASSWORD|MYSQL_PASSWORD|MYSQL_ROOT_PASSWORD)=" /opt/wordpress/.env
+  register: env_values
+  changed_when: false
 
+- name: Convert env values to dictionary
+  set_fact:
+    wp_env: "{{ dict(env_values.stdout_lines | map('split', '=', 1)) }}"
 
 - name: Display WordPress access information
   debug:
     msg:
       - "✅ WordPress has been deployed successfully!"
-      - "🌐 WordPress URL: http://{{ site_domain }}"
-      - "👤 WordPress Admin User: {{ lookup('env', 'WP_ADMIN_USER') | default('admin') }}"
-      - "🔑 WordPress Admin Password: {{ wordpress_admin_password }}"
-      - "🔑 WordPress DB Password: {{ wordpress_db_password }}"
-      - "🔑 MySQL User Password: {{ mysql_user_password }}"
-      - "🔑 MySQL Root Password: {{ mysql_root_password }}"
+      - "🌐 WordPress URL: https://{{ wp_env.SITE_DOMAIN | default(site_domain | default('localhost')) }}"
+      - "👤 WordPress Admin User: {{ wp_env.WP_ADMIN_USER | default('admin') }}"
+      - "🔑 WordPress Admin Password: {{ wp_env.WP_ADMIN_PASSWORD | default('changeme') }}"
+      - "🔑 WordPress DB Password: {{ wp_env.WORDPRESS_DB_PASSWORD | default('changeme') }}"
+      - "🔑 MySQL User Password: {{ wp_env.MYSQL_PASSWORD | default('changeme') }}"
+      - "🔑 MySQL Root Password: {{ wp_env.MYSQL_ROOT_PASSWORD | default('changeme') }}"
