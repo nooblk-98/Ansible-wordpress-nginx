@@ -7,9 +7,9 @@
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white&style=for-the-badge)](https://ubuntu.com/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white&style=for-the-badge)](https://www.docker.com/)
 
-# Deploy WordPress & PhpMyAdmin on AWS VPS with Terraform & Ansible
+# Deploy WordPress on AWS VPS with Terraform & Ansible
 
-This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress (with PhpMyAdmin) using **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
+This guide walks you through deploying a VPS on AWS using **Terraform** and installing WordPress using **Ansible**. It covers all steps, file structure, and debug commands for troubleshooting.
 
 ---
 
@@ -74,7 +74,7 @@ Or check in AWS EC2 console.
 
 ---
 
-## 3️⃣ Install WordPress & PhpMyAdmin with Ansible
+## 3️⃣ Install WordPress with Ansible
 
 ### a. Configure Inventory
 
@@ -95,7 +95,6 @@ ansible_become_method=sudo
 - `ansible/ansible.cfg`: Points to inventory and sets connection options.
 - `ansible/roles/app/files/.env`: Contains WordPress, DB, and admin secrets.
 - `ansible/roles/app/files/docker-compose.yml`: Defines WordPress, MariaDB, Autoheal containers.
-- **PhpMyAdmin is accessible via Nginx reverse proxy at `/phpmyadmin`**.
 
 ### c. Change Domain & SSL Details
 
@@ -161,7 +160,6 @@ ansible-playbook -i inventory.ini playbooks/deploy_wordpress.yml
 ## 5️⃣ Accessing Your Application
 
 - **WordPress:** https://<YOUR_DOMAIN>
-- **PhpMyAdmin:** https://<YOUR_DOMAIN>/phpmyadmin
 - **Credentials:** See Ansible output or check `/opt/wordpress/.env` on the VPS.
 
 ---
@@ -218,6 +216,8 @@ infra/
 - [WordPress Docs](https://wordpress.org/support/article/installing-wordpress/)
 
 ---
+
+**Happy Deploying! 🚀**
 
 **Happy Deploying! 🚀**
 
