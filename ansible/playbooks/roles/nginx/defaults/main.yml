@@ -1,4 +1,4 @@
-site_domain: vvsadwsad.duckdns.org
+site_domain: www.nomadblends.com
 certbot_email: support@weblankan.com
 backend_host: 127.0.0.1
 backend_port: 8080
