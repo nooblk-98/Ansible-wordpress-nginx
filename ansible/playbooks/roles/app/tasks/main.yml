@@ -1,4 +1,26 @@
 ---
+# Clean up existing deployment
+- name: Stop and remove existing WordPress containers
+  become: yes
+  shell: cd /opt/wordpress && docker-compose down -v --remove-orphans
+  ignore_errors: yes
+
+- name: Remove existing WordPress directory
+  become: yes
+  file:
+    path: /opt/wordpress
+    state: absent
+
+- name: Remove WordPress Docker volumes
+  become: yes
+  shell: docker volume rm $(docker volume ls -q | grep wordpress) 2>/dev/null || true
+  ignore_errors: yes
+
+- name: Remove unused Docker volumes
+  become: yes
+  shell: docker volume prune -f
+  ignore_errors: yes
+
 #Create application directory
 - name: Create WordPress application directory
   become: yes
@@ -84,13 +106,37 @@
   become: yes
   shell: cd /opt/wordpress && docker-compose up -d
 
+- name: Set permissions for /opt/www directory
+  become: yes
+  file:
+    path: /opt/www
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+    recurse: yes
+  ignore_errors: yes
+
+- name: Get WordPress container name
+  become: yes
+  shell: docker ps --filter "name=wordperss" --format "{{ '{{' }}.Names{{ '}}' }}" | head -1
+  register: wp_container_name
+  ignore_errors: yes
+
+- name: Wait for WordPress to be ready
+  become: yes
+  shell: |
+    timeout 120 bash -c 'until docker exec {{ wp_container_name.stdout }} wp core is-installed --path=/var/www/html --allow-root 2>/dev/null; do sleep 5; done'
+  when: site_domain is defined and site_domain | length > 0 and wp_container_name is succeeded and wp_container_name.stdout != ""
+  ignore_errors: yes
 
 - name: Update WordPress site and admin URLs to use provided domain with HTTPS
   become: yes
   shell: |
-    docker exec wordperss wp option update siteurl "https://{{ site_domain }}" --path=/var/www/html --allow-root
-    docker exec wordperss wp option update home "https://{{ site_domain }}" --path=/var/www/html --allow-root
-  when: site_domain is defined and site_domain | length > 0
+    docker exec {{ wp_container_name.stdout }} wp option update siteurl "https://{{ site_domain }}" --path=/var/www/html --allow-root
+    docker exec {{ wp_container_name.stdout }} wp option update home "https://{{ site_domain }}" --path=/var/www/html --allow-root
+  when: site_domain is defined and site_domain | length > 0 and wp_container_name is succeeded and wp_container_name.stdout != ""
+  ignore_errors: yes
 
 # Display WordPress access information
 - name: Extract WordPress credentials from .env
