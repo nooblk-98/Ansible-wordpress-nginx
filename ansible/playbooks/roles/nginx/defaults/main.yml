@@ -1,4 +1,4 @@
-site_domain: test.itsnooblk.com
+site_domain: www.slanshei.lk
 certbot_email: support@weblankan.com
 backend_host: 127.0.0.1
 backend_port: 8080
